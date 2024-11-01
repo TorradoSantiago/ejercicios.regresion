@@ -40,7 +40,7 @@ if columnas_existentes:
 else:
     print("Algunas o todas las columnas seleccionadas no existen en el DataFrame.")
 
-# Opcionalmente, puedes también mostrar un resumen estadístico o la cantidad de valores únicos
+# resumen estadístico o cantidad de valores únicos
 if columnas_existentes:
     print("\nResumen estadístico de las columnas seleccionadas:")
     print(df[columnas_existentes].describe(include='all'))  # 'include=all' muestra resumen para todos los tipos de datos
@@ -120,7 +120,7 @@ problemas = {
 }
 
 partidos = {
-    1: "PJ Argentina",
+    1: "PJ",
     2: "UCR",
     3: "UCD",
     4: "Partido Democrático de Mendoza",
@@ -169,11 +169,19 @@ df['Partido'] = df['MPOL101'].map(partidos)  # Asumiendo que quieres usar MPOL10
 # Crear tabla de contingencia
 tabla_contingencia = pd.crosstab(df['Partido'], df['Problema'])
 
-# Realizar la prueba chi-cuadrado
+#prueba chi-cuadrado
 chi2, p_value, dof, expected = chi2_contingency(tabla_contingencia)
 
 print("Chi-squared:", chi2)
 print("P-value:", p_value)
 
-# Si necesitas ver la tabla de contingencia
+# resultados: Chi-squared: 343.7261552337398 P-value: 0.6137592905566149
+
+# como el pvalue esta por arriba de 0.5 se puede decir que la distribución de problemas por partido 
+# no son estadísticamente significativas, sugiriendo que algunos partidos podrían estar más asociados 
+# con ciertos problemas que otros
+# por otra parte el chi cuadrado da alto, lo que significa una alta correlacion
+
+
+# printeamos la tabla de contingencia
 print(tabla_contingencia)
