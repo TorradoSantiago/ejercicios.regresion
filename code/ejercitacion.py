@@ -1,129 +1,85 @@
-# Importar librerías
-import pandas as pd
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
 import numpy as np
-import statsmodels.api as sm
+import pandas as pd
 import pyreadstat
-
-# Ruta al archivo .sav
-file_path = r'C:\Users\Santi\Desktop\Ejercitación_regresión\data\BASEDATOS_ARGENTINA_122.sav'
-
-# Leer los datos
-df, meta = pyreadstat.read_sav(file_path)
-
-#primeras filas del DataFrame
-print(df.head())
-
-# nombres de las columnas disponibles
-print(df.columns)
-
-# Guarda los nombres de las columnas en una lista
-column_names = df.columns.tolist()
-print(column_names)
-
-print(df.describe())  # Estadísticas descriptivas para entender la distribución de los datos
-
-#df_diputados, meta = pyreadstat.read_sav(file_path)
-
-#df_diputados = df_diputados.loc[~((df_diputados['ID101'] == 98) | (df_diputados['ID101'] == 99) | 
- #                                 (df_diputados['PRO102'] == 98) | (df_diputados['PRO112'] == 99))]
-
-# Lista de columnas de interés
-columnas_interes = ['PRO2', 'MPOL101', 'MPOL102', 'MPOL103']
-
-# Verificar que estas columnas existen en el DataFrame limpio
-columnas_existentes = [col for col in columnas_interes if col in df.columns]
-
-# Mostrar los valores de estas columnas si existen
-if columnas_existentes:
-    print("Mostrando las primeras filas de las columnas seleccionadas:")
-    print(df[columnas_existentes].head())
-else:
-    print("Algunas o todas las columnas seleccionadas no existen en el DataFrame.")
-
-# resumen estadístico o cantidad de valores únicos
-if columnas_existentes:
-    print("\nResumen estadístico de las columnas seleccionadas:")
-    print(df[columnas_existentes].describe(include='all'))  # 'include=all' muestra resumen para todos los tipos de datos
-
-    print("\nConteo de valores únicos por columna:")
-    for col in columnas_existentes:
-        print(f"{col}: {df[col].nunique()} valores únicos")
-
-import pandas as pd
-import numpy as np
 from scipy.stats import chi2_contingency
 
-# Mapeo de problemas y partidos políticos según los códigos proporcionados
-problemas = {
+DEFAULT_DATASET = Path(__file__).resolve().parents[1] / "data" / "BASEDATOS_ARGENTINA_122.sav"
+
+PROBLEMAS = {
     1: "Desempleo",
-    2: "Corrupción",
-    3: "Pobreza, Marginación",
+    2: "Corrupcion",
+    3: "Pobreza y marginacion",
     4: "Sanidad",
-    5: "Problemas Económicos",
-    6: "Problemas Fiscales",
-    7: "Problemas Sociales",
-    8: "Problemas Gubernamentales",
-    9: "Problemas Institucionales",
-    10: "Problemas de Cultura Política",
-    11: "Falta de Democracia",
-    12: "Cuestiones de Ámbito Internacional",
-    13: "Conflictos Geopolíticos",
-    14: "Inseguridad Ciudadana y Delincuencia",
-    15: "Narcotráfico",
-    16: "Problemas de Orden Público",
-    17: "Modelo Territorial del Estado",
-    18: "Problemas del Modelo Económico",
-    19: "Reformas Político-Institucionales",
-    20: "Problemas de la Administración de Justicia",
-    21: "Ingobernabilidad y Déficit de la Democracia",
-    22: "Violación de Derechos Humanos y Respeto a Minorías",
-    23: "Falta de Educación",
-    24: "Problemas de Diseño de Política Pública",
-    25: "Problemas de Productividad",
-    26: "Falta de Reforma Agraria",
-    27: "Problemas Medio Ambiente",
-    28: "Problemas Estatales",
-    29: "Problemas Políticos",
-    30: "Presión Grupos Económicos",
-    31: "Problemas de Infraestructura",
-    32: "Problemas Energéticos",
+    5: "Problemas economicos",
+    6: "Problemas fiscales",
+    7: "Problemas sociales",
+    8: "Problemas gubernamentales",
+    9: "Problemas institucionales",
+    10: "Problemas de cultura politica",
+    11: "Falta de democracia",
+    12: "Cuestiones de ambito internacional",
+    13: "Conflictos geopoliticos",
+    14: "Inseguridad ciudadana y delincuencia",
+    15: "Narcotrafico",
+    16: "Problemas de orden publico",
+    17: "Modelo territorial del Estado",
+    18: "Problemas del modelo economico",
+    19: "Reformas politico-institucionales",
+    20: "Problemas de la administracion de justicia",
+    21: "Ingobernabilidad y deficit de la democracia",
+    22: "Violacion de derechos humanos y respeto a minorias",
+    23: "Falta de educacion",
+    24: "Problemas de diseno de politica publica",
+    25: "Problemas de productividad",
+    26: "Falta de reforma agraria",
+    27: "Problemas de medio ambiente",
+    28: "Problemas estatales",
+    29: "Problemas politicos",
+    30: "Presion de grupos economicos",
+    31: "Problemas de infraestructura",
+    32: "Problemas energeticos",
     33: "Burocracia",
-    34: "La Oposición (Intransigencia)",
-    35: "Problemas Laborales",
-    36: "Modelo Admon Empresas Públicas",
-    37: "Problemas del Sector Agropecuario",
-    38: "Movimientos Sociales",
-    39: "Problema Cultural",
-    40: "Problemas de Identidad Nacional",
+    34: "La oposicion",
+    35: "Problemas laborales",
+    36: "Modelo de administracion de empresas publicas",
+    37: "Problemas del sector agropecuario",
+    38: "Movimientos sociales",
+    39: "Problema cultural",
+    40: "Problemas de identidad nacional",
     41: "Populismo",
-    42: "Catástrofes",
-    43: "Proceso de Paz",
-    44: "Falta Independencia Órganos del Estado",
-    45: "Drogadicción",
-    46: "Migración",
-    47: "Servicios Públicos, Falta Energía, Agua",
+    42: "Catastrofes",
+    43: "Proceso de paz",
+    44: "Falta de independencia de organos del Estado",
+    45: "Drogadiccion",
+    46: "Migracion",
+    47: "Servicios publicos, energia o agua",
     48: "Analfabetismo",
-    49: "Falta de Inversión Social",
-    50: "Economía Internacional y Comercio Exterior",
-    51: "Asuntos Partidarios",
-    52: "Efectos de la Guerra",
-    53: "Política Económica",
-    54: "Asuntos Electorales",
-    55: "Falta de Reformas",
-    56: "Problemas con Marco Político-Institucional",
-    57: "Lucha entre Poderes del Estado",
-    58: "Problema Haitiano",
-    59: "Violencia de Género",
-    60: "Problemas Regionales",
-    61: "Dependencia Económica y Política",
-    62: "NS/NC"  # Asumiendo NS/NC como "No Sabe/No Contesta"
+    49: "Falta de inversion social",
+    50: "Economia internacional y comercio exterior",
+    51: "Asuntos partidarios",
+    52: "Efectos de la guerra",
+    53: "Politica economica",
+    54: "Asuntos electorales",
+    55: "Falta de reformas",
+    56: "Problemas con marco politico-institucional",
+    57: "Lucha entre poderes del Estado",
+    58: "Problema haitiano",
+    59: "Violencia de genero",
+    60: "Problemas regionales",
+    61: "Dependencia economica y politica",
+    62: "NS/NC",
 }
 
-partidos = {
+PARTIDOS = {
     1: "PJ",
     2: "UCR",
     3: "UCD",
-    4: "Partido Democrático de Mendoza",
+    4: "Partido Democratico de Mendoza",
     6: "Partido Intransigente",
     7: "FREPASO",
     8: "Partido Socialista",
@@ -134,15 +90,15 @@ partidos = {
     35: "MID",
     47: "Patria Libre",
     49: "Frente para la Victoria",
-    50: "Coalición Cívica",
+    50: "Coalicion Civica",
     53: "Nuevo Encuentro",
     54: "GEN",
     1381: "PRO",
     1382: "Partido Comunista",
-    1386: "Partido Social Patagónico",
+    1386: "Partido Social Patagonico",
     1390: "UNIR",
     2025: "Frente de Todos",
-    2026: "Evolución Radical",
+    2026: "Evolucion Radical",
     2400: "Frente Renovador",
     2401: "Movimiento Popular Fueguino",
     2402: "CREO",
@@ -150,38 +106,124 @@ partidos = {
     2404: "Unidad Ciudadana",
     2405: "PTS",
     2406: "PSOE",
-    2407: "Partido del Diálogo",
+    2407: "Partido del Dialogo",
     2408: "Partido Trabajo y del Pueblo",
     2409: "Republicanos Unidos",
     2410: "Frente Renovador de la Concordia",
-    2411: "Tucumán para Todos",
-    2412: "Tercera Vía",
-    2413: "Juntos Somos Río Negro",
+    2411: "Tucuman para Todos",
+    2412: "Tercera Via",
+    2413: "Juntos Somos Rio Negro",
     2414: "Partido Libertario",
     2415: "Libertad Avanzada",
-    9999: "NC"  # Asumiendo NC como "No Contesta"
+    9999: "NC",
 }
 
-# Mapeo en el DataFrame
-df['Problema'] = df['PRO2'].map(problemas)
-df['Partido'] = df['MPOL101'].map(partidos)  # Asumiendo que quieres usar MPOL101
 
-# Crear tabla de contingencia
-tabla_contingencia = pd.crosstab(df['Partido'], df['Problema'])
-
-#prueba chi-cuadrado
-chi2, p_value, dof, expected = chi2_contingency(tabla_contingencia)
-
-print("Chi-squared:", chi2)
-print("P-value:", p_value)
-
-# resultados: Chi-squared: 343.7261552337398 P-value: 0.6137592905566149
-
-# como el pvalue esta por arriba de 0.5 se puede decir que la distribución de problemas por partido 
-# no son estadísticamente significativas, sugiriendo que algunos partidos podrían estar más asociados 
-# con ciertos problemas que otros
-# por otra parte el chi cuadrado da alto, lo que significa una alta correlacion
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Analiza la asociacion entre problemas percibidos y partido politico."
+    )
+    parser.add_argument(
+        "--file-path",
+        type=Path,
+        default=DEFAULT_DATASET,
+        help="Ruta al archivo SAV a analizar.",
+    )
+    return parser.parse_args()
 
 
-# printeamos la tabla de contingencia
-print(tabla_contingencia)
+def load_dataset(file_path: Path) -> pd.DataFrame:
+    if not file_path.exists():
+        raise FileNotFoundError(f"No se encontro el archivo de datos: {file_path}")
+
+    dataframe, _ = pyreadstat.read_sav(str(file_path))
+    return dataframe
+
+
+def prepare_analysis_frame(dataframe: pd.DataFrame) -> pd.DataFrame:
+    required_columns = ["PRO2", "MPOL101"]
+    missing = [column for column in required_columns if column not in dataframe.columns]
+
+    if missing:
+        raise KeyError(f"Faltan columnas requeridas para el analisis: {missing}")
+
+    clean = dataframe[required_columns].copy()
+    clean["PRO2"] = pd.to_numeric(clean["PRO2"], errors="coerce").astype("Int64")
+    clean["MPOL101"] = pd.to_numeric(clean["MPOL101"], errors="coerce").astype("Int64")
+    clean = clean.dropna(subset=["PRO2", "MPOL101"])
+
+    clean["Problema"] = clean["PRO2"].map(PROBLEMAS)
+    clean["Partido"] = clean["MPOL101"].map(PARTIDOS)
+
+    clean = clean.dropna(subset=["Problema", "Partido"])
+    clean = clean.loc[~clean["Problema"].isin({"NS/NC"})]
+    clean = clean.loc[~clean["Partido"].isin({"NC"})]
+
+    return clean
+
+
+def cramers_v(contingency_table: pd.DataFrame, chi2_value: float) -> float:
+    observations = contingency_table.to_numpy().sum()
+    if observations == 0:
+        return float("nan")
+
+    min_dimension = min(contingency_table.shape) - 1
+    if min_dimension <= 0:
+        return float("nan")
+
+    return float(np.sqrt(chi2_value / (observations * min_dimension)))
+
+
+def describe_dataset(dataframe: pd.DataFrame, analysis_frame: pd.DataFrame) -> None:
+    print("=== Resumen del dataset ===")
+    print(f"Observaciones originales: {len(dataframe):,}")
+    print(f"Observaciones utiles para el analisis: {len(analysis_frame):,}")
+    print(f"Problemas distintos: {analysis_frame['Problema'].nunique()}")
+    print(f"Partidos distintos: {analysis_frame['Partido'].nunique()}")
+
+    print("\nTop 5 problemas mas frecuentes:")
+    print(analysis_frame["Problema"].value_counts().head(5).to_string())
+
+    print("\nTop 5 partidos mas frecuentes:")
+    print(analysis_frame["Partido"].value_counts().head(5).to_string())
+
+
+def run_association_test(analysis_frame: pd.DataFrame) -> None:
+    contingency_table = pd.crosstab(analysis_frame["Partido"], analysis_frame["Problema"])
+    chi2_value, p_value, degrees_of_freedom, _ = chi2_contingency(contingency_table)
+    effect_size = cramers_v(contingency_table, chi2_value)
+
+    print("\n=== Test chi-cuadrado ===")
+    print(f"Chi-cuadrado: {chi2_value:.3f}")
+    print(f"P-value: {p_value:.6f}")
+    print(f"Grados de libertad: {degrees_of_freedom}")
+    print(f"Cramer's V: {effect_size:.3f}")
+
+    if p_value < 0.05:
+        interpretation = (
+            "Se rechaza la hipotesis de independencia: hay evidencia de asociacion "
+            "entre partido politico y problema principal percibido."
+        )
+    else:
+        interpretation = (
+            "No hay evidencia suficiente para rechazar la hipotesis de independencia. "
+            "El estadistico chi-cuadrado no implica correlacion por si mismo."
+        )
+
+    print("\nInterpretacion:")
+    print(interpretation)
+
+    print("\nPrimeras filas de la tabla de contingencia:")
+    print(contingency_table.head().to_string())
+
+
+def main() -> None:
+    args = parse_args()
+    dataframe = load_dataset(args.file_path)
+    analysis_frame = prepare_analysis_frame(dataframe)
+    describe_dataset(dataframe, analysis_frame)
+    run_association_test(analysis_frame)
+
+
+if __name__ == "__main__":
+    main()
