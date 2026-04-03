@@ -8,9 +8,7 @@ import pandas as pd
 import pyreadstat
 from scipy.stats import chi2_contingency
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DATASET = PROJECT_ROOT / "data" / "BASEDATOS_ARGENTINA_122.sav"
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "association-study"
+DEFAULT_DATASET = Path(__file__).resolve().parents[1] / "data" / "BASEDATOS_ARGENTINA_122.sav"
 
 PROBLEMAS = {
     1: "Desempleo",
@@ -131,18 +129,6 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_DATASET,
         help="Ruta al archivo SAV a analizar.",
     )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=DEFAULT_OUTPUT_DIR,
-        help="Directorio donde se exportaran tablas y resumenes.",
-    )
-    parser.add_argument(
-        "--top-n",
-        type=int,
-        default=10,
-        help="Cantidad de filas a mostrar y exportar en tablas resumidas.",
-    )
     return parser.parse_args()
 
 
@@ -188,38 +174,30 @@ def cramers_v(contingency_table: pd.DataFrame, chi2_value: float) -> float:
     return float(np.sqrt(chi2_value / (observations * min_dimension)))
 
 
-def build_frequency_tables(
-    analysis_frame: pd.DataFrame, top_n: int
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    problem_frequency = (
-        analysis_frame["Problema"]
-        .value_counts()
-        .rename_axis("problema")
-        .reset_index(name="frecuencia")
-        .head(top_n)
-    )
-    party_frequency = (
-        analysis_frame["Partido"]
-        .value_counts()
-        .rename_axis("partido")
-        .reset_index(name="frecuencia")
-        .head(top_n)
-    )
-    top_pairs = (
-        analysis_frame.groupby(["Partido", "Problema"])
-        .size()
-        .reset_index(name="frecuencia")
-        .sort_values("frecuencia", ascending=False)
-        .head(top_n)
-    )
+def describe_dataset(dataframe: pd.DataFrame, analysis_frame: pd.DataFrame) -> None:
+    print("=== Resumen del dataset ===")
+    print(f"Observaciones originales: {len(dataframe):,}")
+    print(f"Observaciones utiles para el analisis: {len(analysis_frame):,}")
+    print(f"Problemas distintos: {analysis_frame['Problema'].nunique()}")
+    print(f"Partidos distintos: {analysis_frame['Partido'].nunique()}")
 
-    return problem_frequency, party_frequency, top_pairs
+    print("\nTop 5 problemas mas frecuentes:")
+    print(analysis_frame["Problema"].value_counts().head(5).to_string())
+
+    print("\nTop 5 partidos mas frecuentes:")
+    print(analysis_frame["Partido"].value_counts().head(5).to_string())
 
 
-def run_association_test(analysis_frame: pd.DataFrame) -> dict[str, object]:
+def run_association_test(analysis_frame: pd.DataFrame) -> None:
     contingency_table = pd.crosstab(analysis_frame["Partido"], analysis_frame["Problema"])
     chi2_value, p_value, degrees_of_freedom, _ = chi2_contingency(contingency_table)
     effect_size = cramers_v(contingency_table, chi2_value)
+
+    print("\n=== Test chi-cuadrado ===")
+    print(f"Chi-cuadrado: {chi2_value:.3f}")
+    print(f"P-value: {p_value:.6f}")
+    print(f"Grados de libertad: {degrees_of_freedom}")
+    print(f"Cramer's V: {effect_size:.3f}")
 
     if p_value < 0.05:
         interpretation = (
@@ -232,148 +210,19 @@ def run_association_test(analysis_frame: pd.DataFrame) -> dict[str, object]:
             "El estadistico chi-cuadrado no implica correlacion por si mismo."
         )
 
-    return {
-        "contingency_table": contingency_table,
-        "chi2": float(chi2_value),
-        "p_value": float(p_value),
-        "degrees_of_freedom": int(degrees_of_freedom),
-        "cramers_v": float(effect_size),
-        "interpretation": interpretation,
-    }
-
-
-def print_console_summary(
-    dataframe: pd.DataFrame,
-    analysis_frame: pd.DataFrame,
-    problem_frequency: pd.DataFrame,
-    party_frequency: pd.DataFrame,
-    top_pairs: pd.DataFrame,
-    stats: dict[str, object],
-) -> None:
-    print("=== Resumen del dataset ===")
-    print(f"Observaciones originales: {len(dataframe):,}")
-    print(f"Observaciones utiles para el analisis: {len(analysis_frame):,}")
-    print(f"Problemas distintos: {analysis_frame['Problema'].nunique()}")
-    print(f"Partidos distintos: {analysis_frame['Partido'].nunique()}")
-
-    print("\nTop problemas:")
-    print(problem_frequency.to_string(index=False))
-
-    print("\nTop partidos:")
-    print(party_frequency.to_string(index=False))
-
-    print("\nCruces mas frecuentes:")
-    print(top_pairs.to_string(index=False))
-
-    print("\n=== Test chi-cuadrado ===")
-    print(f"Chi-cuadrado: {stats['chi2']:.3f}")
-    print(f"P-value: {stats['p_value']:.6f}")
-    print(f"Grados de libertad: {stats['degrees_of_freedom']}")
-    print(f"Cramer's V: {stats['cramers_v']:.3f}")
-
     print("\nInterpretacion:")
-    print(stats["interpretation"])
+    print(interpretation)
 
     print("\nPrimeras filas de la tabla de contingencia:")
-    print(stats["contingency_table"].head().to_string())
-
-
-def build_executive_summary(
-    dataframe: pd.DataFrame,
-    analysis_frame: pd.DataFrame,
-    problem_frequency: pd.DataFrame,
-    party_frequency: pd.DataFrame,
-    top_pairs: pd.DataFrame,
-    stats: dict[str, object],
-) -> str:
-    top_problem = problem_frequency.iloc[0]
-    top_party = party_frequency.iloc[0]
-    top_pair = top_pairs.iloc[0]
-
-    return f"""# Resumen ejecutivo
-
-## Contexto
-
-- Observaciones originales: {len(dataframe):,}
-- Observaciones utiles para el analisis: {len(analysis_frame):,}
-- Problemas distintos: {analysis_frame['Problema'].nunique()}
-- Partidos distintos: {analysis_frame['Partido'].nunique()}
-
-## Hallazgos descriptivos
-
-- Problema mas frecuente: {top_problem['problema']} ({top_problem['frecuencia']} casos)
-- Partido mas frecuente: {top_party['partido']} ({top_party['frecuencia']} casos)
-- Cruce mas frecuente: {top_pair['Partido']} / {top_pair['Problema']} ({top_pair['frecuencia']} casos)
-
-## Resultado estadistico
-
-- Chi-cuadrado: {stats['chi2']:.3f}
-- P-value: {stats['p_value']:.6f}
-- Grados de libertad: {stats['degrees_of_freedom']}
-- Cramer's V: {stats['cramers_v']:.3f}
-
-## Interpretacion
-
-{stats['interpretation']}
-"""
-
-
-def write_outputs(
-    output_dir: Path,
-    problem_frequency: pd.DataFrame,
-    party_frequency: pd.DataFrame,
-    top_pairs: pd.DataFrame,
-    stats: dict[str, object],
-    executive_summary: str,
-) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    problem_frequency.to_csv(output_dir / "problem_frequency.csv", index=False)
-    party_frequency.to_csv(output_dir / "party_frequency.csv", index=False)
-    top_pairs.to_csv(output_dir / "top_pairs.csv", index=False)
-    stats["contingency_table"].to_csv(output_dir / "contingency_table.csv")
-    (output_dir / "executive_summary.md").write_text(
-        executive_summary,
-        encoding="utf-8",
-    )
+    print(contingency_table.head().to_string())
 
 
 def main() -> None:
     args = parse_args()
     dataframe = load_dataset(args.file_path)
     analysis_frame = prepare_analysis_frame(dataframe)
-    problem_frequency, party_frequency, top_pairs = build_frequency_tables(
-        analysis_frame, args.top_n
-    )
-    stats = run_association_test(analysis_frame)
-
-    print_console_summary(
-        dataframe,
-        analysis_frame,
-        problem_frequency,
-        party_frequency,
-        top_pairs,
-        stats,
-    )
-
-    executive_summary = build_executive_summary(
-        dataframe,
-        analysis_frame,
-        problem_frequency,
-        party_frequency,
-        top_pairs,
-        stats,
-    )
-    write_outputs(
-        args.output_dir,
-        problem_frequency,
-        party_frequency,
-        top_pairs,
-        stats,
-        executive_summary,
-    )
-
-    print(f"\nArchivos exportados en: {args.output_dir}")
+    describe_dataset(dataframe, analysis_frame)
+    run_association_test(analysis_frame)
 
 
 if __name__ == "__main__":
