@@ -1,29 +1,29 @@
 # Case study
 
-## Pregunta
+## Question
 
-Existe una asociacion entre el partido politico y el problema principal percibido por los encuestados?
+Is there an association between political party preference and the main problem perceived by respondents?
 
-## Enfoque
+## Approach
 
-1. Se seleccionan `PRO2` y `MPOL101` como variables centrales.
-2. Se limpian valores faltantes y categorias no informativas.
-3. Se construye una tabla de contingencia.
-4. Se aplica un test chi-cuadrado de independencia.
-5. Se complementa con `Cramer's V` para medir intensidad de asociacion.
+1. Select `PRO2` and `MPOL101` as the central variables.
+2. Remove missing values and non-informative categories.
+3. Build a contingency table.
+4. Apply a chi-square test of independence.
+5. Complement it with `Cramer's V` to measure association strength.
 
-## Que vuelve mas profesional a este repo
+## What makes this repository more professional
 
-- El analisis ya no depende de una ruta absoluta.
-- El script produce outputs exportables.
-- La interpretacion estadistica evita conclusiones incorrectas.
-- El caso puede explicarse rapido a alguien que no abra primero el notebook.
+- The analysis no longer depends on an absolute path.
+- The script produces exportable outputs.
+- The statistical interpretation avoids incorrect conclusions.
+- The case can be explained quickly to someone who does not open the notebook first.
 
-## Posicionamiento de portfolio
+## Portfolio positioning
 
-Este repo funciona bien como muestra de:
+This repository works well as evidence of:
 
-- orden tecnico,
-- criterio metodologico,
-- capacidad de documentacion,
-- y traduccion de un ejercicio cuantitativo a una pieza mas presentable.
+- technical order,
+- methodological judgment,
+- documentation discipline,
+- and the ability to turn a quantitative exercise into a clearer public-facing asset.

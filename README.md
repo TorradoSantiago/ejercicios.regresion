@@ -1,35 +1,39 @@
 # ejercicios.regresion
 
-Repositorio de ejercicios y proyectos de regresion con notebooks y codigo auxiliar. En esta iteracion se mejoro la parte mas reutilizable del repo para que no dependa de rutas absolutas ni de interpretaciones estadisticas equivocadas.
+Regression exercises and analytical materials focused on methodological care, statistical interpretation, and reusable structure.
 
-## Mejoras aplicadas
+Start with:
+- `BRIEF.md`
+- `docs/case-study.md`
 
-- Refactor de `code/ejercitacion.py` para usar rutas relativas.
-- Limpieza del flujo de analisis para trabajar con `PRO2` y `MPOL101`.
-- Correccion conceptual de la interpretacion del test chi-cuadrado.
-- Incorporacion de `Cramer's V` como medida de intensidad de la asociacion.
-- README y dependencias explicitadas.
+## Improvements applied
 
-## Contenido principal
+- The main script now uses relative paths.
+- The analytical flow was cleaned around `PRO2` and `MPOL101`.
+- The chi-square interpretation was corrected.
+- `Cramer's V` was added as an association-strength measure.
+- The repository now exposes a clearer script and documentation layer.
 
-- `REGRESION_SIMPLE.ipynb`
-- `REGRESION_SIMPLE_FINAL.ipynb`
-- `TPFINAL_VOTOS_ROSARIO.ipynb`
-- `code/ejercitacion.py`
-- `data/BASEDATOS_ARGENTINA_122.sav`
+## Main contents
 
-## Como ejecutar el script
+- `simple_regression.ipynb`
+- `simple_regression_final.ipynb`
+- `rosario_voting_analysis.ipynb`
+- `code/exercise_analysis.py`
+- `data/argentina_dataset_122.sav`
 
-```bash
-python code/ejercitacion.py
-```
-
-Tambien puedes pasar una ruta distinta al dataset:
+## How to run the script
 
 ```bash
-python code/ejercitacion.py --file-path ruta/al/archivo.sav
+python code/exercise_analysis.py
 ```
 
-## Proximo paso recomendable
+You can also pass a different dataset path:
 
-Pasar los notebooks principales a una estructura con introduccion, metodologia, resultados y conclusiones para que queden mejor presentados como piezas academicas o de portfolio.
+```bash
+python code/exercise_analysis.py --file-path path/to/dataset.sav
+```
+
+## Recommended next step
+
+Turn the strongest notebook into a polished case with a clean introduction, methodology, results, and conclusion section.

@@ -1,23 +1,23 @@
 # Notebook upgrade guide
 
-## Estructura sugerida para todos los notebooks
+## Suggested notebook structure for every analysis
 
-1. Titulo y objetivo del caso.
-2. Fuente de datos y limitaciones.
-3. Preguntas e hipotesis.
-4. Limpieza y preparacion.
-5. Analisis descriptivo.
-6. Modelo o prueba principal.
-7. Resultados e interpretacion.
-8. Conclusion ejecutiva.
+1. Case title and objective.
+2. Data source and limitations.
+3. Questions and hypotheses.
+4. Cleaning and preparation.
+5. Descriptive analysis.
+6. Main model or statistical test.
+7. Results and interpretation.
+8. Executive conclusion.
 
-## Criterios visuales
+## Visual criteria
 
-- Una celda markdown breve antes de cada bloque grande.
-- Titulos consistentes y pocas ideas por seccion.
-- Graficos finales con titulo y takeaway.
-- Cierre con 3 o 4 hallazgos en lenguaje simple.
+- A short markdown cell before each major block.
+- Consistent titles and only a few ideas per section.
+- Final charts with a title and takeaway.
+- A closing section with three or four findings in plain language.
 
-## Beneficio
+## Benefit
 
-Con este orden, el notebook deja de verse como una secuencia de pruebas y pasa a funcionar como documento de trabajo o portfolio.
+With this structure, the notebook stops looking like a sequence of tests and starts working as a real analytical document or portfolio asset.
